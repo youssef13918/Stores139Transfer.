@@ -19,7 +19,6 @@
     "@radix-ui/react-toast": "^1.2.14",
     "@supabase/supabase-js": "^2.49.8",
     "@worldcoin/minikit-js": "^1.9.4",
-    "autoprefixer": "^10.4.21",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.511.0",
@@ -37,6 +36,7 @@
     "@types/node": "^22.15.21",
     "@types/react": "^19.1.5",
     "@types/react-dom": "^19.1.5",
+    "autoprefixer": "^10.4.21",
     "eslint": "^9.27.0",
     "eslint-config-next": "^15.1.8",
     "typescript": "^5.8.3"
