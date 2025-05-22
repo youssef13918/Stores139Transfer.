@@ -1,7 +1,6 @@
 "use client"
 
-import type React from "react"
-import { useState } from "react"
+import React, { useState } from "react"
 import { useRouter } from "next/navigation"
 import {
   Card,
@@ -21,8 +20,11 @@ import { useToast } from "@/hooks/use-toast"
 import { createOrder } from "@/lib/orders"
 import { useLivePrice } from "@/hooks/use-live-price"
 
+// Importa MiniKit y helpers de worldcoin minikit-js
+import { MiniKit, tokenToDecimals, Tokens, PayCommandInput } from '@worldcoin/minikit-js'
+
 export function SellForm() {
-  const { user } = useAuth() // ✅ cambiado
+  const { user } = useAuth()
   const { toast } = useToast()
   const router = useRouter()
 
@@ -42,6 +44,79 @@ export function SellForm() {
     setAmount(isNaN(value) ? 0 : value)
   }
 
+  const sendPayment = async (payAmount: number) => {
+    try {
+      // Paso 1: Iniciar el pago en backend para obtener referencia
+      const res = await fetch('/api/initiate-payment', {
+        method: 'POST',
+      })
+      const { id } = await res.json()
+
+      // Limitar amount mínimo 1 y máximo 500 WLD
+      const clampedAmount = Math.min(Math.max(payAmount, 1), 500)
+
+      // Preparar payload para pay
+      const payload: PayCommandInput = {
+        reference: id,
+        to: '0xed036da30351904733ca13c7832d2cb51ffc72da', // tu dirección
+        tokens: [
+          {
+            symbol: Tokens.WLD,
+            token_amount: tokenToDecimals(clampedAmount, Tokens.WLD).toString(),
+          }
+        ],
+        description: `Pago de ${clampedAmount} WLD en la mini app`,
+      }
+
+      if (!MiniKit.isInstalled()) {
+        toast({
+          title: "Wallet no detectada",
+          description: "Por favor instala World App para poder pagar",
+          variant: "destructive",
+        })
+        return { success: false }
+      }
+
+      // Paso 2: Ejecutar el pago on-chain con la wallet
+      const { finalPayload } = await MiniKit.commandsAsync.pay(payload)
+
+      // Paso 3: Confirmar el pago en backend
+      if (finalPayload.status === "success") {
+        const confirmRes = await fetch(`/api/confirm-payment`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(finalPayload),
+        })
+        const confirmJson = await confirmRes.json()
+        if (confirmJson.success) {
+          return { success: true }
+        } else {
+          toast({
+            title: "Pago no confirmado",
+            description: "Hubo un problema verificando el pago.",
+            variant: "destructive",
+          })
+          return { success: false }
+        }
+      } else {
+        toast({
+          title: "Pago fallido o cancelado",
+          description: "El pago no se completó.",
+          variant: "destructive",
+        })
+        return { success: false }
+      }
+    } catch (error) {
+      console.error("Error en proceso de pago:", error)
+      toast({
+        title: "Error en el pago",
+        description: "Inténtalo de nuevo más tarde.",
+        variant: "destructive",
+      })
+      return { success: false }
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -55,7 +130,24 @@ export function SellForm() {
       return
     }
 
+    if (amount <= 0) {
+      toast({
+        title: "Cantidad inválida",
+        description: "Introduce una cantidad válida de WLD",
+        variant: "destructive",
+      })
+      return
+    }
+
     setIsSubmitting(true)
+
+    // Ejecutar el pago on-chain primero
+    const paymentResult = await sendPayment(amount)
+
+    if (!paymentResult.success) {
+      setIsSubmitting(false)
+      return
+    }
 
     try {
       const orderData = {

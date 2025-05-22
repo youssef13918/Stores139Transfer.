@@ -35,15 +35,16 @@ export async function registerUsuario(username: string, email: string, fullName?
     throw new Error("El nombre de usuario o correo electrónico ya está registrado")
   }
 
-  // Insertar nuevo usuario
-  const { data, error } = await supabase.from("usuarios").insert({ username, email, fullName }).select().single()
+  // Insertar nuevo usuario - solo con username y email (sin fullName)
+  const { data, error } = await supabase.from("usuarios").insert({ username, email }).select().single()
 
   if (error) {
     console.error("Error registering user:", error)
     throw new Error("Error al registrar el usuario")
   }
 
-  return data
+  // Añadir el fullName al objeto de retorno aunque no se guarde en la base de datos
+  return { ...data, fullName }
 }
 
 // Obtener usuario por username
