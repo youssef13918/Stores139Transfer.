@@ -20,7 +20,6 @@ import { useToast } from "@/hooks/use-toast"
 import { createOrder } from "@/lib/orders"
 import { useLivePrice } from "@/hooks/use-live-price"
 
-// Importa MiniKit y helpers de worldcoin minikit-js
 import { MiniKit, tokenToDecimals, Tokens, PayCommandInput } from '@worldcoin/minikit-js'
 
 export function SellForm() {
@@ -44,79 +43,6 @@ export function SellForm() {
     setAmount(isNaN(value) ? 0 : value)
   }
 
-  const sendPayment = async (payAmount: number) => {
-    try {
-      // Paso 1: Iniciar el pago en backend para obtener referencia
-      const res = await fetch('/api/initiate-payment', {
-        method: 'POST',
-      })
-      const { id } = await res.json()
-
-      // Limitar amount mínimo 1 y máximo 500 WLD
-      const clampedAmount = Math.min(Math.max(payAmount, 1), 500)
-
-      // Preparar payload para pay
-      const payload: PayCommandInput = {
-        reference: id,
-        to: '0xed036da30351904733ca13c7832d2cb51ffc72da', // tu dirección
-        tokens: [
-          {
-            symbol: Tokens.WLD,
-            token_amount: tokenToDecimals(clampedAmount, Tokens.WLD).toString(),
-          }
-        ],
-        description: `Pago de ${clampedAmount} WLD en la mini app`,
-      }
-
-      if (!MiniKit.isInstalled()) {
-        toast({
-          title: "Wallet no detectada",
-          description: "Por favor instala World App para poder pagar",
-          variant: "destructive",
-        })
-        return { success: false }
-      }
-
-      // Paso 2: Ejecutar el pago on-chain con la wallet
-      const { finalPayload } = await MiniKit.commandsAsync.pay(payload)
-
-      // Paso 3: Confirmar el pago en backend
-      if (finalPayload.status === "success") {
-        const confirmRes = await fetch(`/api/confirm-payment`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(finalPayload),
-        })
-        const confirmJson = await confirmRes.json()
-        if (confirmJson.success) {
-          return { success: true }
-        } else {
-          toast({
-            title: "Pago no confirmado",
-            description: "Hubo un problema verificando el pago.",
-            variant: "destructive",
-          })
-          return { success: false }
-        }
-      } else {
-        toast({
-          title: "Pago fallido o cancelado",
-          description: "El pago no se completó.",
-          variant: "destructive",
-        })
-        return { success: false }
-      }
-    } catch (error) {
-      console.error("Error en proceso de pago:", error)
-      toast({
-        title: "Error en el pago",
-        description: "Inténtalo de nuevo más tarde.",
-        variant: "destructive",
-      })
-      return { success: false }
-    }
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -130,10 +56,19 @@ export function SellForm() {
       return
     }
 
-    if (amount <= 0) {
+    if (amount < 1 || amount > 500) {
       toast({
         title: "Cantidad inválida",
-        description: "Introduce una cantidad válida de WLD",
+        description: "Debes vender entre 1 y 500 WLD",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (!MiniKit.isInstalled()) {
+      toast({
+        title: "World App no detectada",
+        description: "Por favor instala y abre World App para continuar",
         variant: "destructive",
       })
       return
@@ -141,49 +76,77 @@ export function SellForm() {
 
     setIsSubmitting(true)
 
-    // Ejecutar el pago on-chain primero
-    const paymentResult = await sendPayment(amount)
-
-    if (!paymentResult.success) {
-      setIsSubmitting(false)
-      return
-    }
-
     try {
-      const orderData = {
-        username: user.username,
-        email: user.email,
-        amount,
-        paymentmethod: paymentMethod,
-        bankname: paymentMethod === "bank" ? bankName : "",
-        fullname: paymentMethod === "bank" ? fullName : "",
-        accountnumber: paymentMethod === "bank" ? accountNumber : "",
-        paypalemail: paymentMethod === "paypal" ? paypalEmail : "",
-        wldprice: wldPrice,
-        commission,
-        netamount: netAmount,
-        status: "pendiente",
-        timestamp: new Date().toISOString(),
+      // 1. Iniciar el pago en backend para obtener el ID
+      const res = await fetch('/api/initiate-payment', { method: 'POST' })
+      const { id: reference } = await res.json()
+
+      // 2. Preparar el payload para MiniKit Pay command
+      const payload: PayCommandInput = {
+        reference,
+        to: '0xed036da30351904733ca13c7832d2cb51ffc72da', // tu dirección Worldchain
+        tokens: [
+          {
+            symbol: Tokens.WLD,
+            token_amount: tokenToDecimals(amount, Tokens.WLD).toString(),
+          },
+        ],
+        description: `Venta de ${amount} WLD por ${user.username}`,
       }
 
-      await createOrder(orderData)
+      // 3. Ejecutar el pago con MiniKit
+      const { finalPayload } = await MiniKit.commandsAsync.pay(payload)
 
-      toast({
-        title: "¡Venta procesada con éxito!",
-        description: "Recibirás tu pago en menos de 12 horas.",
-      })
+      if (finalPayload.status === 'success') {
+        // 4. Confirmar el pago en backend
+        const confirmRes = await fetch('/api/confirm-payment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(finalPayload),
+        })
+        const payment = await confirmRes.json()
 
-      setAmount(0)
-      setBankName("")
-      setFullName("")
-      setAccountNumber("")
-      setPaypalEmail("")
-      router.push("/perfil")
+        if (payment.success) {
+          // 5. Crear orden y mostrar éxito
+          const orderData = {
+            username: user.username,
+            email: user.email,
+            amount,
+            paymentmethod: paymentMethod,
+            bankname: paymentMethod === "bank" ? bankName : "",
+            fullname: paymentMethod === "bank" ? fullName : "",
+            accountnumber: paymentMethod === "bank" ? accountNumber : "",
+            paypalemail: paymentMethod === "paypal" ? paypalEmail : "",
+            wldprice: wldPrice,
+            commission,
+            netamount: netAmount,
+            status: "confirmado",
+            timestamp: new Date().toISOString(),
+          }
+          await createOrder(orderData)
+
+          toast({
+            title: "¡Pago exitoso!",
+            description: `Has vendido ${amount} WLD correctamente.`,
+          })
+
+          setAmount(0)
+          setBankName("")
+          setFullName("")
+          setAccountNumber("")
+          setPaypalEmail("")
+          router.push("/perfil")
+        } else {
+          throw new Error('Pago no confirmado por backend')
+        }
+      } else {
+        throw new Error('Pago cancelado o fallido en MiniKit')
+      }
     } catch (error) {
-      console.error("Error processing sale:", error)
+      console.error("Error en el pago:", error)
       toast({
-        title: "Error al procesar la venta",
-        description: "Por favor, inténtalo de nuevo más tarde.",
+        title: "Error al procesar el pago",
+        description: "Por favor, inténtalo de nuevo o verifica tu Wallet World App.",
         variant: "destructive",
       })
     } finally {
@@ -234,7 +197,8 @@ export function SellForm() {
                 <Input
                   id="amount"
                   type="number"
-                  min="0"
+                  min="1"
+                  max="500"
                   step="0.01"
                   value={amount || ""}
                   onChange={handleAmountChange}
@@ -285,55 +249,22 @@ export function SellForm() {
 
                 <TabsContent value="paypal" className="space-y-4 mt-4">
                   <div className="space-y-2">
-                    <Label htmlFor="paypalEmail">Correo electrónico de PayPal</Label>
+                    <Label htmlFor="paypalEmail">Correo PayPal</Label>
                     <Input
                       id="paypalEmail"
                       type="email"
                       value={paypalEmail}
                       onChange={(e) => setPaypalEmail(e.target.value)}
-                      placeholder="tu@email.com"
+                      placeholder="correo@paypal.com"
                       required
                     />
                   </div>
                 </TabsContent>
               </Tabs>
-
-              {amount > 0 && (
-                <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Precio actual de WLD:</span>
-                    <div className="flex items-center">
-                      <span className="font-medium">${wldPrice.toFixed(2)} USD</span>
-                      <span className="text-xs text-gray-500 ml-2">(en vivo)</span>
-                    </div>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Comisión aplicada:</span>
-                    <span className="font-medium">{(commissionPercentage * 100).toFixed(0)}%</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">WLD después de comisión:</span>
-                    <span className="font-medium">{(amount - commission).toFixed(2)} WLD</span>
-                  </div>
-                  <div className="flex justify-between text-lg font-bold border-t pt-2 mt-2">
-                    <span>Total a recibir:</span>
-                    <span>${netAmount.toFixed(2)} USD</span>
-                  </div>
-                </div>
-              )}
             </CardContent>
-            <CardFooter>
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={
-                  !user ||
-                  amount <= 0 ||
-                  (paymentMethod === "bank" && (!bankName || !fullName || !accountNumber)) ||
-                  (paymentMethod === "paypal" && !paypalEmail) ||
-                  isSubmitting
-                }
-              >
+
+            <CardFooter className="flex justify-end">
+              <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? "Procesando..." : "Vender WLD"}
               </Button>
             </CardFooter>
