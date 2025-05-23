@@ -1,10 +1,10 @@
+import type React from "react"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { AuthProvider } from "@/lib/auth-context"
 import { Toaster } from "@/components/ui/toaster"
-import { MinikitProviderWrapper } from "@/components/ui"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -12,7 +12,6 @@ export const metadata: Metadata = {
   title: "Store139Transfer - Vende WLD Fácil y Seguro",
   description:
     "Vende tus Worldcoins (WLD) de forma rápida, segura y directa, eligiendo entre transferencia bancaria o PayPal como método de pago.",
-  generator: "v0.dev",
 }
 
 export default function RootLayout({
@@ -24,12 +23,10 @@ export default function RootLayout({
     <html lang="es">
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
-          <MinikitProviderWrapper>
-            <AuthProvider>
-              {children}
-              <Toaster />
-            </AuthProvider>
-          </MinikitProviderWrapper>
+          <AuthProvider>
+            {children}
+            <Toaster />
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>
