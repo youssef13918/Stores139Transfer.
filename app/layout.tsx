@@ -4,7 +4,7 @@ import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { AuthProvider } from "@/lib/auth-context"
 import { Toaster } from "@/components/ui/toaster"
-import { MinikitProviderWrapper } from "@/components/ui/index.tsx" 
+import { MinikitProviderWrapper } from "@/components/ui/MinikitProvider" // ✅ Importación corregida
 
 const inter = Inter({ subsets: ["latin"] })
 
