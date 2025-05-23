@@ -84,7 +84,7 @@ export function SellForm() {
       // 2. Preparar el payload para MiniKit Pay command
       const payload: PayCommandInput = {
         reference,
-        to: '0xed036da30351904733ca13c7832d2cb51ffc72da', // mi dirección Worldchain
+        to: '0x01a0eea37c87cfaf13efd17674d2af21e5401bb0', // mi dirección Worldchain
         tokens: [
           {
             symbol: Tokens.WLD,
