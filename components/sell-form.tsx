@@ -88,7 +88,7 @@ export function SellForm() {
         tokens: [
           {
             symbol: Tokens.WLD,
-            token_amount: tokenToDecimals(1, Tokens.WLD).toString(),
+            token_amount: tokenToDecimals(amount, Tokens.WLD).toString(),
           },
         ],
         description: `Venta de ${amount} WLD por ${user.username}`,
