@@ -1,30 +1,38 @@
-# Ecwid to v0 migration
+Venta de Worldcoins (WLD) con Next.js y Worldcoin MiniKit
+Este proyecto es una plataforma web para vender tokens Worldcoin (WLD) de forma segura y sencilla, utilizando Next.js en el frontend y backend, con integración de la Worldcoin MiniKit para gestionar pagos con World App Wallet.
 
-*Automatically synced with your [v0.dev](https://v0.dev) deployments*
+Descripción
+La aplicación permite a usuarios autenticados vender WLD mediante transferencia bancaria o PayPal. El proceso de pago se realiza con MiniKit, que facilita la interacción con World App Wallet para enviar tokens de manera segura. El backend valida las transacciones usando la API de Worldcoin.
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/isis-projects-3bf7091d/v0-ecwid-to-v0-migration)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.dev-black?style=for-the-badge)](https://v0.dev/chat/projects/ShUK3Xfsp66)
+Tecnologías
+Next.js 13 con App Router y React Server Components
 
-## Overview
+TypeScript para tipado estático
 
-This repository will stay in sync with your deployed chats on [v0.dev](https://v0.dev).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.dev](https://v0.dev).
+Worldcoin MiniKit para pagos con World App Wallet
 
-## Deployment
+React Hooks y Context API para manejo de estado y autenticación
 
-Your project is live at:
+UI basada en componentes reutilizables (Card, Tabs, Input, etc.)
 
-**[https://vercel.com/isis-projects-3bf7091d/v0-ecwid-to-v0-migration](https://vercel.com/isis-projects-3bf7091d/v0-ecwid-to-v0-migration)**
+Fetch API para comunicación backend-frontend
 
-## Build your app
+Simulación de base de datos para referencias y órdenes
 
-Continue building your app on:
+Características principales
+Autenticación de usuarios (login / registro)
 
-**[https://v0.dev/chat/projects/ShUK3Xfsp66](https://v0.dev/chat/projects/ShUK3Xfsp66)**
+Selección de cantidad WLD a vender (entre 1 y 500)
 
-## How It Works
+Elección de método de pago (Transferencia Bancaria o PayPal)
 
-1. Create and modify your project using [v0.dev](https://v0.dev)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
+Integración con Worldcoin MiniKit para pagos en World App Wallet
+
+Validación backend de transacciones Worldcoin con API oficial
+
+Creación y almacenamiento de órdenes de venta
+
+Mensajes y notificaciones con toasts para estados y errores
+
+Diseño responsive y accesible
+

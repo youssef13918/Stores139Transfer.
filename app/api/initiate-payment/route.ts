@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+// En producción guarda el UUID en tu base de datos para validar después
+let lastUUID = ''
+
 export async function POST(req: NextRequest) {
-	const uuid = crypto.randomUUID().replace(/-/g, '')
+  const uuid = crypto.randomUUID().replace(/-/g, '')
+  lastUUID = uuid // Guarda en memoria temporal para demo, reemplaza en prod
 
-	// Aquí deberías guardar el UUID en tu base de datos para validarlo después
+  return NextResponse.json({ id: uuid })
+}
 
-	return NextResponse.json({ id: uuid })
+// Exporta función para obtener referencia en confirm-payment
+export function getReferenceFromDB() {
+  return lastUUID
 }
