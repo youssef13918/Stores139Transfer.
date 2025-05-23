@@ -84,7 +84,7 @@ export function SellForm() {
       // 2. Preparar el payload para MiniKit Pay command
       const payload: PayCommandInput = {
         reference,
-        to: '0x01a0eea37c87cfaf13efd17674d2af21e5401bb0', // mi dirección Worldchain
+        to: '0x01a0eea37c87cfaf13efd17674d2af21e5401bb0', // tu dirección Worldchain
         tokens: [
           {
             symbol: Tokens.WLD,
@@ -98,9 +98,8 @@ export function SellForm() {
       const { finalPayload } = await MiniKit.commandsAsync.pay(payload)
 
       if (finalPayload.status === 'success') {
-        console.log("Payment secuess!")
-        setIsPaid(true);
-        
+        console.log("Pago exitoso!")
+
         // 4. Confirmar el pago en backend
         const confirmRes = await fetch('/api/confirm-payment', {
           method: 'POST',
@@ -250,23 +249,21 @@ export function SellForm() {
                   </div>
                 </TabsContent>
 
-                <TabsContent value="paypal" className="space-y-4 mt-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="paypalEmail">Correo PayPal</Label>
-                    <Input
-                      id="paypalEmail"
-                      type="email"
-                      value={paypalEmail}
-                      onChange={(e) => setPaypalEmail(e.target.value)}
-                      placeholder="correo@paypal.com"
-                      required
-                    />
-                  </div>
+                <TabsContent value="paypal" className="space-y-2 mt-4">
+                  <Label htmlFor="paypalEmail">Correo electrónico de PayPal</Label>
+                  <Input
+                    id="paypalEmail"
+                    type="email"
+                    value={paypalEmail}
+                    onChange={(e) => setPaypalEmail(e.target.value)}
+                    placeholder="email@example.com"
+                    required
+                  />
                 </TabsContent>
               </Tabs>
             </CardContent>
 
-            <CardFooter className="flex justify-end">
+            <CardFooter>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? "Procesando..." : "Vender WLD"}
               </Button>
