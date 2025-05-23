@@ -98,6 +98,9 @@ export function SellForm() {
       const { finalPayload } = await MiniKit.commandsAsync.pay(payload)
 
       if (finalPayload.status === 'success') {
+        console.log("Payment secuess!")
+        setIsPaid(true);
+        
         // 4. Confirmar el pago en backend
         const confirmRes = await fetch('/api/confirm-payment', {
           method: 'POST',
