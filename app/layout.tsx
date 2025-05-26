@@ -4,6 +4,8 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { AuthProvider } from "@/lib/auth-context"
 import { Toaster } from "@/components/ui/toaster"
 
+const inter = Inter({ subsets: ["latin"] })
+
 export const metadata: Metadata = {
   title: "Store139Transfer - Vende WLD Fácil y Seguro",
   description:
@@ -17,7 +19,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <body>
+      <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <AuthProvider>
             {children}
