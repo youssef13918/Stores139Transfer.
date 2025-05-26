@@ -6,3 +6,4 @@ export const inter = Inter({
   display: "swap", // mejora el rendimiento de carga de fuente
   variable: "--font-inter", // útil si usas Tailwind con fuentes variables
 })
+
